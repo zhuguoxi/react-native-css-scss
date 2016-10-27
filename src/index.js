@@ -7,7 +7,7 @@ export default class ReactNativeCss {
 
     }
 
-    parse(input, output = './style.js', prettyPrint = false, literalObject = false, cb) {
+    parse(input, output = './style.js', prettyPrint = false, literalObject = false, cb, es6Able = false) {
         if (utils.contains(input, /scss/)) {
 
             let {css} = require('node-sass').renderSync({
@@ -16,7 +16,7 @@ export default class ReactNativeCss {
             });
             let cssStr = css.toString();
             let styleSheet = this.toJSS(cssStr);
-            utils.outputReactFriendlyStyle(styleSheet, output, prettyPrint, literalObject);
+            utils.outputReactFriendlyStyle(styleSheet, output, prettyPrint, literalObject, es6Able);
 
             if (cb) {
                 cb(styleSheet, cssStr);
@@ -29,7 +29,7 @@ export default class ReactNativeCss {
                     process.exit();
                 }
                 let styleSheet = this.toJSS(data);
-                utils.outputReactFriendlyStyle(styleSheet, output, prettyPrint, literalObject);
+                utils.outputReactFriendlyStyle(styleSheet, output, prettyPrint, literalObject, es6Able);
 
                 if (cb) {
                     cb(styleSheet, data);

@@ -19,11 +19,18 @@ export default class Utils {
     fs.readFile(file, "utf8", cb);
   }
 
-  static outputReactFriendlyStyle(style, outputFile, prettyPrint, literalObject) {
+  static outputReactFriendlyStyle(style, outputFile, prettyPrint, literalObject, es6Able) {
     var indentation = prettyPrint ? 4 : 0;
     var jsonOutput = JSON.stringify(style, null, indentation);
-    var output = "module.exports = ";
-    output += (literalObject) ? `${jsonOutput}` : `require('react-native').StyleSheet.create(${jsonOutput});`;
+    var output;
+
+    if( es6Able ){
+      output = `import {StyleSheet} from 'react-native'; export default StyleSheet.create(${jsonOutput});`
+    }else{
+      output = "module.exports = ";
+      output += (literalObject) ? `${jsonOutput}` : `require('react-native').StyleSheet.create(${jsonOutput});`;
+    }
+
     // Write to file
     fs.writeFileSync(outputFile, output);
     return output;

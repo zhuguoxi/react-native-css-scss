@@ -32,10 +32,11 @@ var ReactNativeCss = (function () {
         value: function parse(input, output, prettyPrint, literalObject, cb) {
             if (output === undefined) output = './style.js';
             if (prettyPrint === undefined) prettyPrint = false;
+            if (literalObject === undefined) literalObject = false;
 
             var _this = this;
 
-            if (literalObject === undefined) literalObject = false;
+            var es6Able = arguments.length <= 5 || arguments[5] === undefined ? false : arguments[5];
 
             if (_utilsJs2['default'].contains(input, /scss/)) {
                 var _require$renderSync = require('node-sass').renderSync({
@@ -47,7 +48,7 @@ var ReactNativeCss = (function () {
 
                 var cssStr = css.toString();
                 var styleSheet = this.toJSS(cssStr);
-                _utilsJs2['default'].outputReactFriendlyStyle(styleSheet, output, prettyPrint, literalObject);
+                _utilsJs2['default'].outputReactFriendlyStyle(styleSheet, output, prettyPrint, literalObject, es6Able);
 
                 if (cb) {
                     cb(styleSheet, cssStr);
@@ -59,7 +60,7 @@ var ReactNativeCss = (function () {
                         process.exit();
                     }
                     var styleSheet = _this.toJSS(data);
-                    _utilsJs2['default'].outputReactFriendlyStyle(styleSheet, output, prettyPrint, literalObject);
+                    _utilsJs2['default'].outputReactFriendlyStyle(styleSheet, output, prettyPrint, literalObject, es6Able);
 
                     if (cb) {
                         cb(styleSheet, data);
