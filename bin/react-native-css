@@ -1,0 +1,78 @@
+#!/usr/bin/env node
+
+var Rncs = require('../build/index.js');
+var cssOpera = new Rncs();
+var path = require('path');
+var fs = require('fs');
+var argv = require('minimist')(process.argv.slice(2));
+var chokidar = require('chokidar');
+var watch = argv['w'] || argv['watch'];
+var prettyPrint = argv['p'] || argv['pretty'] ? true : false;
+var inputPut = (argv['i'] ) || argv._[0] ;
+var literalObject = argv['l'] || argv['literal'] ? true : false;
+var glob = require("glob");
+
+
+/**
+ * 检索某个目录下，符合这些正则表达式的文件列表
+ */
+var pattern2fileList = function (src, patternList, callback) {
+    var pattern = '{' + patternList.join(',') + '}';
+
+    glob(pattern, {cwd: src, mark: true}, callback);
+}
+
+/**
+ * css编译入口
+ */
+var cssPa = function (input, output, callback) {
+    var reInput = path.resolve(process.cwd(), input);
+    if( !output ){
+        output = path.join(
+            path.dirname(reInput),
+            path.basename( reInput, path.extname(reInput) )
+        )+'.js';
+    }
+    try{
+        cssOpera.parse(reInput, output, prettyPrint, literalObject, ()=> {
+            callback && callback.apply(null, arguments);
+            console.log(input, 'compile is ok √')
+        });
+    }catch (err){
+        console.log(err)
+    }
+
+}
+
+var watchAction = function (watchPath) {
+    var watcher = chokidar.watch(inputArgs, {
+        ignored: /[\/\\]\./, persistent: true
+    }).on('change', function (path) {
+        console.log(path, 'has been changed ');
+        cssPa(path, void(0), ()=>{ });
+    });
+    console.log(' ============= react-native-css-scss run watch =============');
+    return watcher
+}
+
+
+if (inputPut) {
+    var inputArgs = argv['i'] || argv._[0];
+
+    var patternList = [inputArgs, '*.css'];      //{,}中逗号后面不能有空格
+    var src = process.cwd();
+
+    pattern2fileList(src, patternList, function (err, fileList) {
+        if (err) {
+            console.log(err);
+            return;
+        }
+        debugger
+        fileList.forEach((item)=>{
+            cssPa(item, void(0), ()=>{ })
+        });
+
+        watchAction(inputArgs)
+
+    });
+}
