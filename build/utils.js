@@ -1,7 +1,7 @@
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
-  value: true
+    value: true
 });
 
 var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
@@ -15,57 +15,99 @@ var _fs = require('fs');
 var _fs2 = _interopRequireDefault(_fs);
 
 var Utils = (function () {
-  function Utils() {
-    _classCallCheck(this, Utils);
-  }
+    function Utils() {
+        _classCallCheck(this, Utils);
+    }
 
-  _createClass(Utils, null, [{
-    key: "arrayContains",
-    value: function arrayContains(value, arr) {
-      for (var i = 0; i < arr.length; i++) {
-        if (value === arr[i]) {
-          return true;
+    _createClass(Utils, null, [{
+        key: "arrayContains",
+        value: function arrayContains(value, arr) {
+            for (var i = 0; i < arr.length; i++) {
+                if (value === arr[i]) {
+                    return true;
+                }
+            }
+            return false;
         }
-      }
-      return false;
-    }
-  }, {
-    key: "clean",
-    value: function clean(string) {
-      return string.replace(/\r?\n|\r/g, "");
-    }
-  }, {
-    key: "readFile",
-    value: function readFile(file, cb) {
-      _fs2["default"].readFile(file, "utf8", cb);
-    }
-  }, {
-    key: "outputReactFriendlyStyle",
-    value: function outputReactFriendlyStyle(style, outputFile, prettyPrint, literalObject, es6Able) {
-      var indentation = prettyPrint ? 4 : 0;
-      var jsonOutput = JSON.stringify(style, null, indentation);
-      var output;
+    }, {
+        key: "clean",
+        value: function clean(string) {
+            return string.replace(/\r?\n|\r/g, "");
+        }
+    }, {
+        key: "readFile",
+        value: function readFile(file, cb) {
+            _fs2["default"].readFile(file, "utf8", cb);
+        }
+    }, {
+        key: "pasteTs",
+        value: function pasteTs(style, indentation) {
+            var reg = /([\-\_0-9a-zA-Z]+)(__view|__text)?/;
+            var tsType = [{
+                match: '__view',
+                suffix: 'as React.ViewStyle'
+            }, {
+                match: '__text',
+                suffix: 'as React.TextStyle'
+            }];
 
-      if (es6Able) {
-        output = "import {StyleSheet} from 'react-native'; export default StyleSheet.create(" + jsonOutput + ");";
-      } else {
-        output = "module.exports = ";
-        output += literalObject ? "" + jsonOutput : "require('react-native').StyleSheet.create(" + jsonOutput + ");";
-      }
+            var pasteResult = [];
 
-      // Write to file
-      _fs2["default"].writeFileSync(outputFile, output);
-      return output;
-    }
-  }, {
-    key: "contains",
-    value: function contains(string, needle) {
-      var search = string.match(needle);
-      return search && search.length > 0;
-    }
-  }]);
+            pasteResult.push('{');
 
-  return Utils;
+            // indentation && pasteResult.push('\n');
+
+            Object.keys(style).forEach(function (item) {
+                var regResult = item.match(reg);
+                var key = item,
+                    tsSuffix = '';
+
+                tsType.forEach(function (ts) {
+                    var idx = item.indexOf(ts.match);
+
+                    if (idx !== -1) {
+                        key = item.slice(0, idx);
+                        tsSuffix = ts.suffix;
+                    }
+                });
+
+                pasteResult.push(key + ':');
+                pasteResult.push(JSON.stringify(style[item], null, indentation));
+                pasteResult.push(tsSuffix);
+                pasteResult.push(',');
+                // indentation && pasteResult.push('\n');
+            });
+            pasteResult.push('}');
+            return pasteResult.join('');
+        }
+    }, {
+        key: "outputReactFriendlyStyle",
+        value: function outputReactFriendlyStyle(style, outputFile, prettyPrint, literalObject, es6Able) {
+            var indentation = prettyPrint ? 4 : 0;
+            var jsonOutput = Utils.pasteTs(style, indentation);
+            var output;
+
+            if (es6Able) {
+
+                output = "import {StyleSheet} from 'react-native'; export default StyleSheet.create(" + jsonOutput + ");";
+            } else {
+                output = "module.exports = ";
+                output += literalObject ? "" + jsonOutput : "require('react-native').StyleSheet.create(" + jsonOutput + ");";
+            }
+
+            // Write to file
+            _fs2["default"].writeFileSync(outputFile, output);
+            return output;
+        }
+    }, {
+        key: "contains",
+        value: function contains(string, needle) {
+            var search = string.match(needle);
+            return search && search.length > 0;
+        }
+    }]);
+
+    return Utils;
 })();
 
 exports["default"] = Utils;
