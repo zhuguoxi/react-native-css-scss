@@ -1,6 +1,6 @@
 {
   "name": "react-native-css-scss",
-  "version": "0.0.5",
+  "version": "0.0.7",
   "description": "build css or scss for react-native",
   "main": "index.js",
   "scripts": {
