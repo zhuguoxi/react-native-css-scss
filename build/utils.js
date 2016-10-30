@@ -42,7 +42,7 @@ var Utils = (function () {
     }, {
         key: "pasteTs",
         value: function pasteTs(style, indentation) {
-            var reg = /([\-\_0-9a-zA-Z]+)(__view|__text)?/;
+            var blankStr = '    ';
             var tsType = [{
                 match: '__view',
                 suffix: 'as React.ViewStyle'
@@ -55,10 +55,9 @@ var Utils = (function () {
 
             pasteResult.push('{');
 
-            // indentation && pasteResult.push('\n');
+            indentation && pasteResult.push('\n');
 
             Object.keys(style).forEach(function (item) {
-                var regResult = item.match(reg);
                 var key = item,
                     tsSuffix = '';
 
@@ -71,11 +70,16 @@ var Utils = (function () {
                     }
                 });
 
-                pasteResult.push(key + ':');
-                pasteResult.push(JSON.stringify(style[item], null, indentation));
-                pasteResult.push(tsSuffix);
+                pasteResult.push(blankStr + key + ':');
+                var jsonStr = JSON.stringify(style[item], null, indentation + blankStr.length);
+
+                jsonStr = jsonStr.slice(0, -1) + blankStr + '}';
+
+                pasteResult.push(jsonStr);
+
+                pasteResult.push(' ' + tsSuffix);
                 pasteResult.push(',');
-                // indentation && pasteResult.push('\n');
+                indentation && pasteResult.push('\n');
             });
             pasteResult.push('}');
             return pasteResult.join('');
@@ -89,7 +93,11 @@ var Utils = (function () {
 
             if (es6Able) {
 
-                output = "import {StyleSheet} from 'react-native'; export default StyleSheet.create(" + jsonOutput + ");";
+                output = "import {StyleSheet} from 'react-native'; \nexport default StyleSheet.create(" + jsonOutput + ");";
+
+                if (literalObject) {
+                    output = "export default " + jsonOutput;
+                }
             } else {
                 output = "module.exports = ";
                 output += literalObject ? "" + jsonOutput : "require('react-native').StyleSheet.create(" + jsonOutput + ");";

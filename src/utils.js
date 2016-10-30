@@ -20,7 +20,7 @@ export default class Utils {
     }
 
     static pasteTs(style, indentation) {
-        let reg =/([\-\_0-9a-zA-Z]+)(__view|__text)?/;
+        let blankStr = '    ';
         let tsType = [{
                 match: '__view',
                 suffix:'as React.ViewStyle'
@@ -36,10 +36,9 @@ export default class Utils {
 
         pasteResult.push('{');
 
-        // indentation && pasteResult.push('\n');
+        indentation && pasteResult.push('\n');
 
         Object.keys(style).forEach((item)=>{
-            let regResult = item.match(reg);
             let key = item, tsSuffix = '';
 
             tsType.forEach((ts)=>{
@@ -51,11 +50,18 @@ export default class Utils {
                 }
             })
 
-            pasteResult.push( key+':' );
-            pasteResult.push( JSON.stringify(style[item], null, indentation) );
-            pasteResult.push(tsSuffix)
+            pasteResult.push( blankStr + key+':' );
+            let jsonStr = JSON.stringify(style[item], null, indentation+blankStr.length);
+
+            jsonStr = jsonStr.slice(0,-1) + blankStr + '}';
+
+            pasteResult.push( jsonStr );
+
+
+
+            pasteResult.push(' '+tsSuffix)
             pasteResult.push(',');
-            // indentation && pasteResult.push('\n');
+            indentation && pasteResult.push('\n');
         })
         pasteResult.push('}');
         return pasteResult.join('')
@@ -69,7 +75,11 @@ export default class Utils {
 
         if (es6Able) {
 
-            output = `import {StyleSheet} from 'react-native'; export default StyleSheet.create(${jsonOutput});`
+            output = `import {StyleSheet} from 'react-native'; \nexport default StyleSheet.create(${jsonOutput});`
+
+            if( literalObject ){
+                output = `export default ${jsonOutput}`;
+            }
 
 
         } else {

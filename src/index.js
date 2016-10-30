@@ -7,7 +7,7 @@ export default class ReactNativeCss {
 
     }
 
-    parse(input, output = './style.js', prettyPrint = false, literalObject = false, cb, es6Able = false) {
+    parse(input, output = './style.js', prettyPrint = false, literalObject = false, cb, es6Able = false, specialReactNative) {
         if (utils.contains(input, /scss/)) {
 
             let {css} = require('node-sass').renderSync({
@@ -15,7 +15,7 @@ export default class ReactNativeCss {
                 outputStyle: 'compressed'
             });
             let cssStr = css.toString();
-            let styleSheet = this.toJSS(cssStr);
+            let styleSheet = this.toJSS(cssStr, specialReactNative);
             utils.outputReactFriendlyStyle(styleSheet, output, prettyPrint, literalObject, es6Able);
 
             if (cb) {
@@ -28,7 +28,7 @@ export default class ReactNativeCss {
                     console.error(err);
                     process.exit();
                 }
-                let styleSheet = this.toJSS(data);
+                let styleSheet = this.toJSS(data, specialReactNative);
                 utils.outputReactFriendlyStyle(styleSheet, output, prettyPrint, literalObject, es6Able);
 
                 if (cb) {
@@ -38,7 +38,7 @@ export default class ReactNativeCss {
         }
     }
 
-    toJSS(stylesheetString) {
+    toJSS(stylesheetString, specialReactNative) {
         const directions = ['top', 'right', 'bottom', 'left'];
         const changeArr = ['margin', 'padding', 'border-width', 'border-radius'];
         const numberize = ['width', 'height', 'font-size', 'line-height'].concat(directions);
@@ -102,7 +102,6 @@ export default class ReactNativeCss {
 
                     let value = declaration.value;
                     let property = declaration.property;
-
                     if (specialProperties[property]) {
                         let special = specialProperties[property],
                             matches = special.regex.exec(value)
@@ -122,6 +121,20 @@ export default class ReactNativeCss {
                             }
                             continue;
                         }
+                    }
+
+                    // 传入特殊处理
+                    if( specialReactNative && typeof specialReactNative[property] === 'function' ){
+                        styles[toCamelCase(property)] = specialReactNative[property](value);
+                        continue
+                    }
+
+                    if(specialReactNative && typeof specialReactNative.__$$ === 'function' ){
+                        let spectialVal = specialReactNative.__$$(property, value);
+                        if(void(0) !== spectialVal) {
+                            styles[toCamelCase(property)] = spectialVal;
+                            continue
+                        };
                     }
 
                     if (utils.arrayContains(property, unsupported)) continue;

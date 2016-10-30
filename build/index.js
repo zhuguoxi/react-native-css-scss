@@ -29,14 +29,14 @@ var ReactNativeCss = (function () {
 
     _createClass(ReactNativeCss, [{
         key: 'parse',
-        value: function parse(input, output, prettyPrint, literalObject, cb) {
+        value: function parse(input, output, prettyPrint, literalObject, cb, es6Able, specialReactNative) {
             if (output === undefined) output = './style.js';
             if (prettyPrint === undefined) prettyPrint = false;
             if (literalObject === undefined) literalObject = false;
 
             var _this = this;
 
-            var es6Able = arguments.length <= 5 || arguments[5] === undefined ? false : arguments[5];
+            if (es6Able === undefined) es6Able = false;
 
             if (_utilsJs2['default'].contains(input, /scss/)) {
                 var _require$renderSync = require('node-sass').renderSync({
@@ -47,7 +47,7 @@ var ReactNativeCss = (function () {
                 var css = _require$renderSync.css;
 
                 var cssStr = css.toString();
-                var styleSheet = this.toJSS(cssStr);
+                var styleSheet = this.toJSS(cssStr, specialReactNative);
                 _utilsJs2['default'].outputReactFriendlyStyle(styleSheet, output, prettyPrint, literalObject, es6Able);
 
                 if (cb) {
@@ -59,7 +59,7 @@ var ReactNativeCss = (function () {
                         console.error(err);
                         process.exit();
                     }
-                    var styleSheet = _this.toJSS(data);
+                    var styleSheet = _this.toJSS(data, specialReactNative);
                     _utilsJs2['default'].outputReactFriendlyStyle(styleSheet, output, prettyPrint, literalObject, es6Able);
 
                     if (cb) {
@@ -70,7 +70,7 @@ var ReactNativeCss = (function () {
         }
     }, {
         key: 'toJSS',
-        value: function toJSS(stylesheetString) {
+        value: function toJSS(stylesheetString, specialReactNative) {
             var directions = ['top', 'right', 'bottom', 'left'];
             var changeArr = ['margin', 'padding', 'border-width', 'border-radius'];
             var numberize = ['width', 'height', 'font-size', 'line-height'].concat(directions);
@@ -156,7 +156,6 @@ var ReactNativeCss = (function () {
 
                                     var value = declaration.value;
                                     var property = declaration.property;
-
                                     if (specialProperties[property]) {
                                         var special = specialProperties[property],
                                             matches = special.regex.exec(value);
@@ -176,6 +175,20 @@ var ReactNativeCss = (function () {
                                             }
                                             return 'continue';
                                         }
+                                    }
+
+                                    // 传入特殊处理
+                                    if (specialReactNative && typeof specialReactNative[property] === 'function') {
+                                        styles[(0, _toCamelCase2['default'])(property)] = specialReactNative[property](value);
+                                        return 'continue';
+                                    }
+
+                                    if (specialReactNative && typeof specialReactNative.__$$ === 'function') {
+                                        var spectialVal = specialReactNative.__$$(property, value);
+                                        if (void 0 !== spectialVal) {
+                                            styles[(0, _toCamelCase2['default'])(property)] = spectialVal;
+                                            return 'continue';
+                                        };
                                     }
 
                                     if (_utilsJs2['default'].arrayContains(property, unsupported)) return 'continue';
