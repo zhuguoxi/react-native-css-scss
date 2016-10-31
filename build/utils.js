@@ -59,7 +59,8 @@ var Utils = (function () {
 
             Object.keys(style).forEach(function (item) {
                 var key = item,
-                    tsSuffix = '';
+                    tsSuffix = '',
+                    sData = style[item];
 
                 tsType.forEach(function (ts) {
                     var idx = item.indexOf(ts.match);
@@ -71,11 +72,29 @@ var Utils = (function () {
                 });
 
                 pasteResult.push(blankStr + key + ':');
+
+                var secoundObj = {};
+                Object.keys(sData).forEach(function (skey) {
+                    if (typeof sData[skey] === 'object') {
+                        secoundObj[skey] = sData[skey];
+                        delete sData[skey];
+                    }
+                });
+
                 var jsonStr = JSON.stringify(style[item], null, indentation + blankStr.length);
+                pasteResult.push(jsonStr.slice(0, -1));
 
-                jsonStr = jsonStr.slice(0, -1) + blankStr + '}';
+                if (Object.keys(secoundObj).length > 0) {
 
-                pasteResult.push(jsonStr);
+                    pasteResult[pasteResult.length - 1] = pasteResult[pasteResult.length - 1].replace(/\n$/, ',');
+
+                    var secoundJsonStr = JSON.stringify(secoundObj, null, indentation + blankStr.length);
+                    pasteResult.push(secoundJsonStr.slice(1, -1).replace(/\n$/, ''));
+                    tsSuffix && pasteResult.push(' as any');
+                    pasteResult.push(',\n');
+                }
+
+                pasteResult.push(blankStr + '}');
 
                 pasteResult.push(' ' + tsSuffix);
                 pasteResult.push(',');

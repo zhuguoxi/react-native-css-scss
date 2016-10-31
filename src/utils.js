@@ -19,6 +19,8 @@ export default class Utils {
         fs.readFile(file, "utf8", cb);
     }
 
+
+
     static pasteTs(style, indentation) {
         let blankStr = '    ';
         let tsType = [{
@@ -39,7 +41,8 @@ export default class Utils {
         indentation && pasteResult.push('\n');
 
         Object.keys(style).forEach((item)=>{
-            let key = item, tsSuffix = '';
+            let key = item, tsSuffix = '',
+                sData = style[item];
 
             tsType.forEach((ts)=>{
                 let idx = item.indexOf(ts.match);
@@ -51,12 +54,31 @@ export default class Utils {
             })
 
             pasteResult.push( blankStr + key+':' );
-            let jsonStr = JSON.stringify(style[item], null, indentation+blankStr.length);
 
-            jsonStr = jsonStr.slice(0,-1) + blankStr + '}';
+            let secoundObj = {};
+            Object.keys(sData).forEach((skey)=>{
+                if( typeof sData[skey] === 'object' ){
+                    secoundObj[skey] = sData[skey];
+                    delete sData[skey]
+                }
+            });
 
-            pasteResult.push( jsonStr );
 
+            let jsonStr = JSON.stringify(style[item], null, indentation + blankStr.length);
+            pasteResult.push(jsonStr.slice(0,-1));
+
+            if( Object.keys(secoundObj).length > 0 ){
+
+                pasteResult[pasteResult.length-1] = pasteResult[pasteResult.length-1].replace(/\n$/, ',');
+
+                let secoundJsonStr = JSON.stringify(secoundObj, null, indentation + blankStr.length);
+                pasteResult.push(secoundJsonStr.slice(1,-1).replace(/\n$/, ''));
+                tsSuffix && pasteResult.push(' as any')
+                pasteResult.push(',\n')
+
+            }
+
+            pasteResult.push( blankStr + '}' );
 
 
             pasteResult.push(' '+tsSuffix)
