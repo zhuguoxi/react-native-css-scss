@@ -1,18 +1,21 @@
 #!/usr/bin/env node
 
-var {Project} = require('../index');
+var {Project, require} = require('../index');
 
 var project = new Project({
     inputPut: './css/**/!(_)*.{scss,css}',
-    literalObject: false,
+    outPut: (outPut)=>{
+        return outPut.replace(/\/css/, '/test')
+    },
+    tsAble:true,
+    // literalObject: false,
     specialReactNative: {
             // 'padding-horizontal': (value) => {
             //     return parseFloat(value.replace(/px|\s*/g, ''));
             // }
             transform: (value)=>{
                 let result = [],
-                    regArr = ['rotate','rotateX','rotateY','rotateZ','scale','scaleX','scaleY','translate','translateX','translateY', 'skew','skewX', 'skewY', 'perspective'],
-                    numArr = ['perspective', 'scale', 'translate'];
+                    regArr = ['rotate','rotateX','rotateY','rotateZ','scale','scaleX','scaleY','translate','translateX','translateY', 'skew','skewX', 'skewY', 'perspective'];
 
                 function isNumber(property) {
                     return ['perspective', 'scale', 'translate'].some((item)=>{

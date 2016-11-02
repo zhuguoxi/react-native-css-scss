@@ -1,4 +1,5 @@
 import fs from 'fs';
+import path from 'path';
 
 export default class Utils {
 
@@ -21,17 +22,17 @@ export default class Utils {
 
 
 
-    static pasteTs(style, indentation) {
+    static pasteTs(style, indentation, tsAble) {
         let blankStr = '    ';
-        let tsType = [{
-                match: '__view',
-                suffix:'as React.ViewStyle'
-            },
-            {
-                match: '__text',
-                suffix:'as React.TextStyle'
-            }
-        ];
+        // let tsType = [{
+        //         match: '__view',
+        //         suffix:'as React.ViewStyle'
+        //     },
+        //     {
+        //         match: '__text',
+        //         suffix:'as React.TextStyle'
+        //     }
+        // ];
 
         let pasteResult = [];
 
@@ -44,14 +45,16 @@ export default class Utils {
             let key = item, tsSuffix = '',
                 sData = style[item];
 
-            tsType.forEach((ts)=>{
-                let idx = item.indexOf(ts.match);
+            // tsType.forEach((ts)=>{
+            //     let idx = item.indexOf(ts.match);
+            //
+            //     if( idx !== -1 ){
+            //         key = item.slice(0, idx);
+            //         tsSuffix  = ts.suffix
+            //     }
+            // })
 
-                if( idx !== -1 ){
-                    key = item.slice(0, idx);
-                    tsSuffix  = ts.suffix
-                }
-            })
+            tsAble && (tsSuffix = ' as any');
 
             pasteResult.push( blankStr + key+':' );
 
@@ -73,7 +76,8 @@ export default class Utils {
 
                 let secoundJsonStr = JSON.stringify(secoundObj, null, indentation + blankStr.length);
                 pasteResult.push(secoundJsonStr.slice(1,-1).replace(/\n$/, ''));
-                tsSuffix && pasteResult.push(' as any')
+                pasteResult.push(tsSuffix)
+                // tsSuffix && pasteResult.push(' as any')
                 pasteResult.push(',\n')
 
             }
@@ -81,7 +85,7 @@ export default class Utils {
             pasteResult.push( blankStr + '}' );
 
 
-            pasteResult.push(' '+tsSuffix)
+            pasteResult.push(tsSuffix)
             pasteResult.push(',');
             indentation && pasteResult.push('\n');
         })
@@ -90,9 +94,23 @@ export default class Utils {
 
     }
 
-    static outputReactFriendlyStyle(style, outputFile, prettyPrint, literalObject, es6Able) {
+    // create dir for loop
+    static createMkdir(dirpath, mode, callback) {
+        fs.exists(dirpath, function(exists) {
+            if(exists) {
+                callback(dirpath);
+            } else {
+                //尝试创建父目录，然后再创建当前目录
+                Utils.createMkdir(path.dirname(dirpath), mode, function(){
+                    fs.mkdir(dirpath, mode, callback);
+                });
+            }
+        });
+    }
+
+    static outputReactFriendlyStyle(style, outputFile, prettyPrint, literalObject, es6Able, tsAble) {
         var indentation = prettyPrint ? 4 : 0;
-        var jsonOutput = Utils.pasteTs(style, indentation);
+        var jsonOutput = Utils.pasteTs(style, indentation, tsAble);
         var output;
 
         if (es6Able) {
@@ -110,7 +128,9 @@ export default class Utils {
         }
 
         // Write to file
-        fs.writeFileSync(outputFile, output);
+        Utils.createMkdir(path.dirname(outputFile), '0777', ()=>{
+            fs.writeFileSync(outputFile, output);
+        })
         return output;
     }
 

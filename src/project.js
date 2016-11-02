@@ -35,23 +35,17 @@ var specialReactNative = {
     }
 }
 
-var inputTranOut = function (inputPath, suffix) {
-    return path.join(
-            path.dirname(inputPath),
-            path.basename(inputPath, path.extname(inputPath))
-        ) + suffix;
-};
-
-
 
 export default class Project{
     constructor( options = {} ) {
         this.options = Object.assign({
             inputPut: '',        // 编译文件路径匹配格式
+            outPut:(outPut) => {return outPut},           // 输出文件路径转换函数
             watch: true,         // 是否进行监控
             prettyPrint: true,   // 是否进行格式化打印
             suffix: 'js',        // 输出文件格式
             useEs6: true,        // 以es6输出
+            tsAble:false,
             literalObject: true, // 不包括reactnative StyleSheet处理
             specialReactNative: {} // 扩展reactNative样式处理
         }, options);
@@ -80,6 +74,18 @@ export default class Project{
 
     }
 
+    inputTranOut(inputPath) {
+
+        let outPut =  path.join(
+                path.dirname(inputPath),
+                path.basename(inputPath, path.extname(inputPath))
+            ) + this.options.suffix;
+
+        typeof this.options.outPut === 'function' &&
+            (outPut = this.options.outPut(outPut));
+        return outPut;
+    }
+
     /**
      * 监控文件 【增删改】 变化
      */
@@ -88,7 +94,9 @@ export default class Project{
         if( !this.options.watch ) return;
 
         var watcher = chokidar.watch(watchPath, {
-            ignored: /[\/\\]\./, persistent: true
+            ignored: /[\/\\]\./,
+            persistent: true,
+            ignoreInitial: true
         }).on('change',  (filePath) => {
             console.log(filePath, 'has been changed ');
             this.parseCSS({
@@ -101,7 +109,7 @@ export default class Project{
             });
         }).on('unlink',  (filePath) => {
             console.log(filePath, 'has been unlink ');
-            fs.unlink(inputTranOut(path.resolve(process.cwd(), filePath), this.options.suffix))
+            fs.unlink(this.inputTranOut(path.resolve(process.cwd(), filePath), this.options.suffix))
         });
         console.log(' ============= react-native-css-scss run watch =============');
         return watcher
@@ -114,7 +122,7 @@ export default class Project{
 
         var reInput = path.resolve(process.cwd(), input);
         if (!output) {
-            output = inputTranOut(reInput, this.options.suffix);
+            output = this.inputTranOut(reInput, this.options.suffix);
         }
         try {
             cssOpera.parse(reInput, output, this.options.prettyPrint, this.options.literalObject, ()=> {
@@ -122,7 +130,7 @@ export default class Project{
                 callback && callback.apply(null, arguments);
                 console.log(input, 'compile is ok √')
 
-            }, this.options.useEs6, specialReactNative);
+            }, this.options.useEs6, specialReactNative, this.options.tsAble);
         } catch (err) {
             console.log(err)
         }

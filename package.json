@@ -1,9 +1,10 @@
 {
   "name": "react-native-css-scss",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "description": "build css or scss for react-native",
   "main": "index.js",
   "scripts": {
+    "publish":"sh build.sh",
     "start": "babel src --out-dir build --presets es2015",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
